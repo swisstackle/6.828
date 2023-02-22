@@ -60,8 +60,10 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit(0);
-    fprintf(stderr, "exec not implemented\n");
-    // Your code here ...
+      if (strcmp(ecmd->argv[0], "ls") == 0) {
+      execvp("ls", ecmd->argv);
+      fprintf(stderr, "execvp ls failed\n");
+    }
     break;
 
   case '>':
