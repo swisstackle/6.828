@@ -1,4 +1,4 @@
-# MITOpencourseware: Operating Systems Engineering: Assignments and Labs
+# MITOpencourseware: Operating Systems Engineering
 ## Assignment Types
 `inclass` contains inclass Assignments.
 
