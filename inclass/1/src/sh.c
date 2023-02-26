@@ -91,39 +91,39 @@ runcmd(struct cmd *cmd)
 			break;
 
 		case '|':
-		 pcmd = (struct pipecmd*)cmd;
-         struct execcmd *left = (struct execcmd*)pcmd->left;
-         struct execcmd *right = (struct execcmd*)pcmd->right;
+			pcmd = (struct pipecmd*)cmd;
+			struct execcmd *left = (struct execcmd*)pcmd->left;
+			struct execcmd *right = (struct execcmd*)pcmd->right;
 
-          int i;
-          int pd[2];
-          pipe(pd);
-          int pid1 = fork1();
-          if(!pid1) {
-              close(pd[0]);
-              dup2(pd[1], 1);
-             execvp(left->argv[0], left->argv);
-              exit(0);
+			int i;
+			int pd[2];
+			pipe(pd);
+			int pid1 = fork1();
+			if(!pid1) {
+				close(pd[0]);
+				dup2(pd[1], 1);
+				execvp(left->argv[0], left->argv);
+				exit(0);
           }
 
-          int pid2 = fork1();
-          if(!pid2) {
-              close(pd[1]);
-              dup2(pd[0], 0);
-              execvp(right->argv[0], right->argv);
-              exit(0);
-          }
-          close(pd[0]);
-          close(pd[1]);
+			int pid2 = fork1();
+			if(!pid2) {
+				close(pd[1]);
+				dup2(pd[0], 0);
+				execvp(right->argv[0], right->argv);
+				exit(0);
+			}
+			close(pd[0]);
+			close(pd[1]);
 
-          int status2;
-          int status;
-          if(waitpid(pid1, &status, 0) == -1){
-               perror("waitpid1");
-          }
-          if(waitpid(pid2, &status2, 0) == -1) {
-               perror("waitpid2");
-          };
+			int status2;
+			int status;
+			if(waitpid(pid1, &status, 0) == -1){
+				perror("waitpid1");
+			}
+			if(waitpid(pid2, &status2, 0) == -1) {
+				perror("waitpid2");
+			};
 			break; 
 		}  
 	}
