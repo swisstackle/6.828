@@ -12,7 +12,7 @@ Run `./build/sh`
 * Piping with no more than 2 commands
 
 ### Commands
-* `grep` Note: Have to pass --color=auto if coloring preferred.
+* `grep` Note: Have to pass `--color=auto` if coloring preferred.
 * `echo`
 * `cat`
 * `ls`
