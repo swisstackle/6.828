@@ -6,7 +6,8 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <sys/wait.h>
+#include <stdint.h>
 // Simplifed xv6 shell.
 
 #define MAXARGS 10
@@ -38,51 +39,111 @@ struct pipecmd {
 
 int fork1(void);  // Fork but exits on failure.
 struct cmd *parsecmd(char*);
-
+int spawn_proc(int in, int out, struct execcmd *command);
 // Execute cmd.  Never returns.
-void
+	void
 runcmd(struct cmd *cmd)
 {
-  int p[2], r;
-  struct execcmd *ecmd;
-  struct pipecmd *pcmd;
-  struct redircmd *rcmd;
+	int p[2], r;
+	struct execcmd *ecmd;
+	struct pipecmd *pcmd;
+	struct redircmd *rcmd;
 
-  if(cmd == 0)
-    exit(0);
-  
-  switch(cmd->type){
-  default:
-    fprintf(stderr, "unknown runcmd\n");
-    exit(-1);
+	if(cmd == 0)
+		exit(0);
 
-  case ' ':
-    ecmd = (struct execcmd*)cmd;
-    if(ecmd->argv[0] == 0)
-      exit(0);
-      if (strcmp(ecmd->argv[0], "ls") == 0) {
-      execvp("ls", ecmd->argv);
-      fprintf(stderr, "execvp ls failed\n");
+	switch(cmd->type){
+		default:
+			fprintf(stderr, "unknown runcmd\n");
+			exit(-1);
+
+		case ' ':
+			ecmd = (struct execcmd*)cmd;
+			if(ecmd->argv[0] == 0){
+				exit(0);
+			}
+
+				if (strcmp(ecmd->argv[0], "ls") == 0) {
+					execvp("ls", ecmd->argv);
+					fprintf(stderr, "execvp ls failed\n");
+				}
+				if (strcmp(ecmd->argv[0], "echo") == 0) {
+					perror("From echo");
+					execvp("echo", ecmd->argv);
+					fprintf(stderr, "execvp failed\n");
+				}
+				if (strcmp(ecmd->argv[0], "grep") == 0) {
+					execvp("grep", ecmd->argv);
+					fprintf(stderr, "execvp failed\n");
+				}
+				if (strcmp(ecmd->argv[0], "cat") == 0) {
+					execvp("cat", ecmd->argv);
+					fprintf(stderr, "execvp failed\n");
+				}
+				break;
+
+		case '>':
+		case '<':
+			rcmd = (struct redircmd*)cmd;
+			fprintf(stderr, "redir not implemented\n");
+			// Your code here ...
+			runcmd(rcmd->cmd);
+			break;
+
+		case '|':
+		 pcmd = (struct pipecmd*)cmd;
+         struct execcmd *left = (struct execcmd*)pcmd->left;
+         struct execcmd *right = (struct execcmd*)pcmd->right;
+
+          int i;
+          int pd[2];
+          pipe(pd);
+          int pid1 = fork1();
+          if(!pid1) {
+              close(pd[0]);
+              dup2(pd[1], 1);
+             execvp(left->argv[0], left->argv);
+              exit(0);
+          }
+
+          int pid2 = fork1();
+          if(!pid2) {
+              close(pd[1]);
+              dup2(pd[0], 0);
+              execvp(right->argv[0], right->argv);
+              exit(0);
+          }
+          close(pd[0]);
+          close(pd[1]);
+
+          int status2;
+          int status;
+          if(waitpid(pid1, &status, 0) == -1){
+               perror("waitpid1");
+          }
+          if(waitpid(pid2, &status2, 0) == -1) {
+               perror("waitpid2");
+          };
+			break; 
+		}  
+	}
+
+int
+spawn_proc(int in, int out, struct execcmd *command) {
+  pid_t pid;
+
+  if((pid = fork1()) == 0) {
+    if (in != 0) {
+      dup2(in, 0);
+      close(in);
     }
-    break;
-
-  case '>':
-  case '<':
-    rcmd = (struct redircmd*)cmd;
-    fprintf(stderr, "redir not implemented\n");
-    // Your code here ...
-    runcmd(rcmd->cmd);
-    break;
-
-  case '|':
-    pcmd = (struct pipecmd*)cmd;
-    fprintf(stderr, "pipe not implemented\n");
-    // Your code here ...
-    break;
-  }    
-  exit(0);
+    if(out != 1) {
+      dup2(out, 1);
+      close(out);
+    }
+  }
+return execvp(command->argv[0], command->argv);
 }
-
 int
 getcmd(char *buf, int nbuf)
 {
