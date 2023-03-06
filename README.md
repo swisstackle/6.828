@@ -2,7 +2,7 @@
 ## Assignment Types
 `inclass` contains inclass Assignments.
 
-`labs` contains lab assignments.
+`xv6-labs-2022` contains lab assignments as a git submodule to the repo.
 
 `project` contains the project I am working on.
 
